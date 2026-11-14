@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Yapay Zeka Programı Yönetimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* Düzen fikri: tek şifre, iki sekme (oylama, fikirler); her sekme kendi yönetim sayfasını tam yükseklikte gösterir. Tek tema (açık). */
+:root{color-scheme:light;--ink:#171C47;--muted:#565E88;--paper:#F4F5FA;--line:#DDE1EF;--navy:#2B3292;--teal:#0B6B63;
+  --display:"Manrope","Segoe UI",Arial,sans-serif;--body:"IBM Plex Sans","Segoe UI",Arial,sans-serif}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:.8rem 1rem;flex-wrap:wrap;padding:.7rem 1.1rem;background:#fff;border-bottom:1px solid var(--line)}
+.mark{font-family:var(--display);font-weight:800;letter-spacing:.2em;color:#fff;background:var(--navy);padding:.3rem .6rem .3rem .8rem;border-radius:.35rem;font-size:.95rem}
+h1{font-family:var(--display);font-size:1.25rem;font-weight:800;letter-spacing:-.02em;margin-right:auto}
+.tabs{display:flex;gap:.3rem;padding:.2rem;border-radius:.7rem;background:#ECEEF7}
+.tabs button{border:0;background:transparent;padding:.4rem .9rem;border-radius:.5rem;font:inherit;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(23,28,71,.15)}
+.tabs button[data-t="fikir"][aria-selected="true"]{color:var(--teal)}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.gate{margin:3rem auto;max-width:26rem;width:calc(100% - 2rem);background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1.3rem;display:grid;gap:.8rem;box-shadow:0 16px 36px -26px rgba(23,28,71,.4)}
+.gate h2{font-family:var(--display);font-size:1.2rem;font-weight:800}
+.gate p{color:var(--muted);font-size:.92rem}
+input{font:inherit;padding:.55rem .75rem;border:1px solid var(--line);border-radius:.6rem}
+.btn{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:.6rem;padding:.55rem 1rem}
+.ghost{background:#fff;color:var(--navy)}
+iframe{flex:1;width:100%;border:0;background:var(--paper)}
+</style>
+</head>
+<body>
+<header>
+  <b class="mark">SASA</b><h1>Yapay zeka programı yönetimi</h1>
+  <div class="tabs" role="tablist" id="tabs" hidden>
+    <button type="button" role="tab" data-t="oy" aria-selected="true">Vizyon oylaması</button>
+    <button type="button" role="tab" data-t="fikir" aria-selected="false">Fikir portalı</button>
+  </div>
+  <button type="button" class="btn ghost" id="cikis" hidden>Çıkış</button>
+</header>
+<form class="gate" id="gate">
+  <h2>Yönetim girişi</h2>
+  <p>Apps Script dosyasına yazdığınız yönetim şifresi. İki bölüm de aynı şifreyle açılır.</p>
+  <input id="sifre" type="password" placeholder="Yönetim şifresi" aria-label="Yönetim şifresi" autocomplete="current-password">
+  <button class="btn" type="submit">Giriş</button>
+</form>
+<iframe id="f-oy" title="Vizyon oylaması" hidden></iframe>
+<iframe id="f-fikir" title="Fikir portalı" hidden></iframe>
+<script>
+(function(){
+  var gate=document.getElementById("gate"),tabs=document.getElementById("tabs"),cikis=document.getElementById("cikis");
+  var F={oy:document.getElementById("f-oy"),fikir:document.getElementById("f-fikir")},SRC={oy:"oy-yonetim.html",fikir:"fikir-yonetim.html"};
+  function goster(t){
+    Object.keys(F).forEach(function(k){F[k].hidden=k!==t;if(k===t&&!F[k].getAttribute("src"))F[k].setAttribute("src",SRC[k]);});
+    tabs.querySelectorAll("button").forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===t?"true":"false");});
+    try{history.replaceState(null,"","#"+t);}catch(e){}
+  }
+  function ac(){gate.hidden=true;tabs.hidden=false;cikis.hidden=false;goster(location.hash==="#fikir"?"fikir":"oy");}
+  var var_=false;try{var_=!!sessionStorage.getItem("oy-yonetim");}catch(e){}
+  if(var_)ac();
+  gate.addEventListener("submit",function(e){e.preventDefault();var s=document.getElementById("sifre").value;if(!s)return;
+    try{sessionStorage.setItem("oy-yonetim",s);sessionStorage.setItem("fikir-yonetim",s);}catch(err){}ac();});
+  tabs.addEventListener("click",function(e){var b=e.target.closest("button");if(b)goster(b.dataset.t);});
+  cikis.addEventListener("click",function(){try{sessionStorage.removeItem("oy-yonetim");sessionStorage.removeItem("fikir-yonetim");}catch(e){}location.replace(location.pathname);});
+})();
+</script>
+</body>
+</html>

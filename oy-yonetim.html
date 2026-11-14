@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Oylama Yönetimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Düzen fikri: üstte şifre ve özet, altında seçenek çubukları, geçerli oylar ve tüm oy izi. Tek tema (açık). */
+:root{
+  color-scheme:light;
+  --navy:#2B3292; --ink:#171C47; --muted:#565E88; --paper:#F5F6FB; --line:#DDE1EF;
+  --steel:#3A6EA8; --teal:#0F8983; --bronze:#9A6A22;
+  --display:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none !important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.4;font-size:16px;-webkit-font-smoothing:antialiased}
+main{max-width:64rem;margin:0 auto;padding:1.2rem 1rem 3rem;display:grid;gap:1rem}
+header{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.mark{font-family:var(--display);font-weight:800;letter-spacing:.2em;color:#fff;background:var(--navy);padding:.3rem .6rem .3rem .8rem;border-radius:.35rem;font-size:.95rem}
+h1{font-family:var(--display);font-size:1.5rem;font-weight:800;letter-spacing:-.015em}
+h2{font-family:var(--display);font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1rem 1.1rem;box-shadow:0 14px 34px -24px rgba(23,28,71,.3);min-width:0}
+form{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+input{font:inherit;color:var(--ink);padding:.5rem .75rem;border:1px solid var(--line);border-radius:.55rem;flex:1 1 12rem;min-width:0}
+input:focus-visible,button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+button{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:.55rem;padding:.5rem 1rem}
+button.ghost{background:#fff;color:var(--navy)}
+#durum{color:var(--muted);font-size:.92rem}
+.ozet{display:flex;align-items:baseline;gap:.6rem 1.2rem;flex-wrap:wrap}
+.ozet b{font-family:var(--display);font-size:2rem;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+.tally{display:grid;gap:.8rem}
+.t{display:grid;grid-template-columns:2.1rem minmax(0,14rem) 1fr auto;gap:.7rem;align-items:center}
+.letter{width:2.1rem;height:2.1rem;border-radius:.6rem;display:grid;place-items:center;font-family:var(--display);font-weight:800;color:#fff;background:var(--tone)}
+.t strong{font-family:var(--display)}
+.tw{background:#ECEEF7;border-radius:0 4px 4px 0}
+.tb{height:1.5rem;border-radius:0 4px 4px 0;background:var(--tone);min-width:2px;transition:width .4s}
+.n{font-family:var(--display);font-weight:800;font-size:1.35rem;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.tablo{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.s{font-family:var(--display);font-weight:800;color:var(--navy)}
+td.z{color:var(--muted);font-variant-numeric:tabular-nums}
+.bos{color:var(--muted)}
+@media (max-width:600px){.t{grid-template-columns:2.1rem 1fr auto}.t strong{grid-column:2}.tw{grid-column:1/-1;grid-row:2}}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<main>
+  <header><b class="mark">SASA</b><h1>Oylama yönetimi</h1></header>
+
+  <section class="card">
+    <form id="giris">
+      <input id="sifre" type="password" placeholder="Yönetim şifresi" aria-label="Yönetim şifresi" autocomplete="current-password">
+      <button type="submit">Sonuçları göster</button>
+      <button type="button" class="ghost" id="yenile" hidden>Yenile</button>
+    </form>
+    <p id="durum" role="status" style="margin-top:.6rem">Şifreyi yazıp sonuçları açın.</p>
+  </section>
+
+  <div id="icerik" hidden style="display:grid;gap:1rem">
+    <section class="card">
+      <h2>Özet</h2>
+      <p class="ozet"><span><b id="kisi">0</b> kişi oy verdi</span><span><b id="toplam">0</b> gönderim</span><span id="son" class="bos"></span></p>
+    </section>
+    <section class="card">
+      <h2>Seçeneklere göre geçerli oy</h2>
+      <div class="tally" id="tally"></div>
+    </section>
+    <section class="card">
+      <h2>Geçerli oylar · kişi başına son gönderim</h2>
+      <div class="tablo"><table><thead><tr><th>Ad Soyad</th><th>Seçim</th><th>Zaman</th></tr></thead><tbody id="gecerli"></tbody></table></div>
+      <p class="bos" id="bos1">Henüz oy yok.</p>
+    </section>
+    <section class="card">
+      <h2>Oy izi · tüm gönderimler, en yeni üstte</h2>
+      <div class="tablo"><table><thead><tr><th>Zaman</th><th>Ad Soyad</th><th>Seçim</th><th>Cihaz</th></tr></thead><tbody id="iz"></tbody></table></div>
+      <p class="bos" id="bos2">Henüz gönderim yok.</p>
+    </section>
+  </div>
+</main>
+
+<script src="ayar.js"></script>
+<script>
+(function(){
+  var NAMES={A:"Akıllı Entegre Polyester",B:"Öğrenen Fabrika",C:"Her Tonda Kazanç"};
+  var TONES={A:"var(--steel)",B:"var(--teal)",C:"var(--bronze)"};
+  var API=(typeof window.OY_API==="string"&&/^https:\/\//.test(window.OY_API))?window.OY_API:"";
+  var durum=document.getElementById("durum"),sifre=document.getElementById("sifre"),icerik=document.getElementById("icerik"),yenile=document.getElementById("yenile");
+  var anahtar="",zamanlayici=null,rows={};
+  try{anahtar=sessionStorage.getItem("oy-yonetim")||"";}catch(e){}
+
+  Object.keys(NAMES).forEach(function(k){
+    var t=document.createElement("div");t.className="t";t.style.setProperty("--tone",TONES[k]);
+    var l=document.createElement("span");l.className="letter";l.textContent=k;
+    var n=document.createElement("strong");n.textContent=NAMES[k];
+    var w=document.createElement("div");w.className="tw";var b=document.createElement("div");b.className="tb";b.style.width="0%";w.appendChild(b);
+    var c=document.createElement("span");c.className="n";c.textContent="0";
+    t.appendChild(l);t.appendChild(n);t.appendChild(w);t.appendChild(c);document.getElementById("tally").appendChild(t);rows[k]={b:b,c:c};
+  });
+
+  function jsonp(params){
+    return new Promise(function(res,rej){
+      var cb="oycb"+Date.now()+Math.floor(Math.random()*1e4),sc=document.createElement("script");
+      var t=setTimeout(function(){done();rej(new Error("zaman"));},15000);
+      function done(){clearTimeout(t);try{delete window[cb];}catch(e){window[cb]=undefined;}sc.remove();}
+      window[cb]=function(d){done();res(d);};
+      sc.onerror=function(){done();rej(new Error("ag"));};
+      var q=Object.keys(params).map(function(k){return encodeURIComponent(k)+"="+encodeURIComponent(params[k]);}).join("&");
+      sc.src=API+(API.indexOf("?")<0?"?":"&")+q+"&callback="+cb;
+      document.head.appendChild(sc);
+    });
+  }
+  function tarih(iso){var d=new Date(iso);if(isNaN(d))return "";var p=function(n){return (n<10?"0":"")+n;};
+    return p(d.getDate())+"."+p(d.getMonth()+1)+"."+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes());}
+  function hucre(tr,metin,cls){var td=document.createElement("td");td.textContent=metin;if(cls)td.className=cls;tr.appendChild(td);}
+
+  function ciz(oylar){
+    var temiz=oylar.filter(function(o){return o&&NAMES[o.secim];}).map(function(o){return {zaman:String(o.zaman||""),ad:String(o.ad||""),secim:o.secim,cihaz:String(o.cihaz||"")};});
+    temiz.sort(function(a,b){return a.zaman<b.zaman?1:-1;});
+    var son={},sira=[];
+    temiz.forEach(function(o){var k=o.cihaz||("ad:"+o.ad.toLocaleLowerCase("tr"));if(!son[k]){son[k]=o;sira.push(o);}});
+    var say={A:0,B:0,C:0};sira.forEach(function(o){say[o.secim]++;});
+    var max=Math.max(1,say.A,say.B,say.C);
+    Object.keys(rows).forEach(function(k){rows[k].c.textContent=say[k];rows[k].b.style.width=(say[k]/max*100)+"%";});
+    document.getElementById("kisi").textContent=sira.length;
+    document.getElementById("toplam").textContent=temiz.length;
+    document.getElementById("son").textContent=temiz.length?("Son gönderim: "+tarih(temiz[0].zaman)):"";
+    var g=document.getElementById("gecerli"),iz=document.getElementById("iz");g.textContent="";iz.textContent="";
+    sira.forEach(function(o){var tr=document.createElement("tr");hucre(tr,o.ad);hucre(tr,o.secim,"s");hucre(tr,tarih(o.zaman),"z");g.appendChild(tr);});
+    temiz.forEach(function(o){var tr=document.createElement("tr");hucre(tr,tarih(o.zaman),"z");hucre(tr,o.ad);hucre(tr,o.secim,"s");hucre(tr,o.cihaz.slice(-6),"z");iz.appendChild(tr);});
+    document.getElementById("bos1").hidden=sira.length>0;
+    document.getElementById("bos2").hidden=temiz.length>0;
+  }
+
+  function cek(sessiz){
+    if(!API){durum.textContent="Oylama adresi tanımlı değil: ayar.js dosyasına Apps Script adresini yazın.";return;}
+    if(!sessiz)durum.textContent="Yükleniyor…";
+    jsonp({islem:"liste",anahtar:anahtar}).then(function(r){
+      if(r&&r.ok&&Array.isArray(r.oylar)){
+        try{sessionStorage.setItem("oy-yonetim",anahtar);}catch(e){}
+        icerik.hidden=false;yenile.hidden=false;ciz(r.oylar);
+        durum.textContent="Güncellendi: "+tarih(new Date().toISOString())+". Sayfa açıkken 20 saniyede bir yenilenir.";
+        if(!zamanlayici)zamanlayici=setInterval(function(){if(!document.hidden)cek(true);},20000);
+      }else{
+        clearInterval(zamanlayici);zamanlayici=null;icerik.hidden=true;yenile.hidden=true;
+        try{sessionStorage.removeItem("oy-yonetim");}catch(e){}
+        durum.textContent=(r&&r.hata==="sifre ayarlanmamis")?"Apps Script dosyasında yönetim şifresi henüz değiştirilmemiş.":"Şifre yanlış.";
+      }
+    },function(){if(!sessiz)durum.textContent="Bağlantı kurulamadı. Biraz sonra yeniden deneyin.";});
+  }
+  document.getElementById("giris").addEventListener("submit",function(e){e.preventDefault();anahtar=sifre.value;cek(false);});
+  yenile.addEventListener("click",function(){cek(false);});
+  if(anahtar)cek(false);
+})();
+</script>
+</body>
+</html>

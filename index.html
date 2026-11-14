@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SASA Yapay Zeka Programı Karar Sunumu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Düzen fikri: iki tam ekran sayfa. 1) vizyon-misyon için üç seçenek + ortak hedefler, 2) üç yıllık plan + getiri.
+   Altta oy çubuğu. Tek tema (açık). Tonlar tesisin ünite renklerinden: çelik mavisi, turkuaz, bronz; çapa renk SASA lacivert. */
+:root{
+  color-scheme:light;
+  --navy:#2B3292;
+  --ink:#171C47;
+  --muted:#565E88;
+  --paper:#F5F6FB;
+  --surface:#FFFFFF;
+  --line:#DDE1EF;
+  --steel:#3A6EA8;
+  --teal:#0F8983;
+  --bronze:#9A6A22;
+  --seq-1:#AEB3E8; --seq-2:#5F68CF; --seq-3:#2B3292;
+  --c1:#4350C4; --c2:#C27A12; --c3:#009E94; --c4:#8B6FD0; --c5:#B5532E;
+  --display:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none !important}
+html{font-size:16px}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.4;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;letter-spacing:-.015em}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+/* Zemin: nokta deseni + yumuşak ışık lekeleri */
+.bg{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(43,50,146,.17) 1px,transparent 1.3px);background-size:20px 20px;
+  -webkit-mask-image:radial-gradient(ellipse 85% 75% at 50% 35%,#000 25%,transparent 82%);mask-image:radial-gradient(ellipse 85% 75% at 50% 35%,#000 25%,transparent 82%)}
+.glow{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:drift 22s ease-in-out infinite alternate}
+.glow.g1{width:42vw;height:42vw;left:-10vw;top:-16vw;background:rgba(67,80,196,.20)}
+.glow.g2{width:36vw;height:36vw;right:-8vw;top:8vh;background:rgba(0,158,148,.14);animation-duration:28s}
+.glow.g3{width:30vw;height:30vw;left:35vw;bottom:-18vw;background:rgba(194,122,18,.12);animation-duration:34s}
+@keyframes drift{to{transform:translate3d(4vw,3vh,0) scale(1.08)}}
+
+/* Üst şerit */
+.top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:.6rem 1rem;flex-wrap:wrap;
+  padding:.7rem 1.2rem;border-bottom:1px solid var(--line);background:rgba(255,255,255,.72);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:.8rem;min-width:0;flex-wrap:wrap}
+.mark{font-family:var(--display);font-weight:800;letter-spacing:.2em;color:#fff;background:var(--navy);padding:.3rem .6rem .3rem .8rem;border-radius:.35rem;font-size:.95rem}
+.brand div{display:grid;line-height:1.25}
+.brand strong{font-family:var(--display);font-weight:700;font-size:.98rem}
+.brand span{font-size:.84rem;color:var(--navy);font-weight:500}
+.top small{color:var(--muted);font-size:.86rem}
+
+/* Sayfalar */
+.deck{position:relative;z-index:1}
+.slide{padding:1.2rem 1.2rem 1.5rem;display:grid;gap:1rem;align-content:start}
+.slide + .slide{border-top:1px dashed var(--line)}
+.head{display:grid;gap:.3rem;max-width:64rem}
+.eyebrow{font-size:.8rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
+.shiny{background:linear-gradient(100deg,var(--navy) 35%,#8F97EA 50%,var(--navy) 65%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+@keyframes shine{from{background-position:120% 0}to{background-position:-120% 0}}
+h1{font-size:1.9rem;font-weight:800;line-height:1.12}
+.lede{color:var(--muted);font-size:1.02rem}
+
+/* Kart */
+.card{position:relative;background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:1.05rem;padding:1.05rem 1.15rem;
+  box-shadow:0 1px 2px rgba(23,28,71,.04),0 14px 34px -22px rgba(23,28,71,.28);backdrop-filter:blur(6px);min-width:0}
+.magic::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:radial-gradient(18rem circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--tone,var(--navy)) 13%,transparent),transparent 70%)}
+.magic:hover::before{opacity:1}
+.card > *{position:relative}
+.opt{cursor:pointer;display:flex;flex-direction:column;gap:.8rem;transition:border-color .2s,box-shadow .2s,transform .2s;outline:none}
+.opt:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--tone) 55%,var(--line))}
+.opt:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--tone) 35%,transparent)}
+.opt[aria-checked="true"]{border-color:var(--tone);box-shadow:0 0 0 2px var(--tone),0 18px 40px -22px color-mix(in srgb,var(--tone) 70%,transparent);background:#fff}
+.opt[aria-checked="true"]::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;
+  background:conic-gradient(from var(--a),transparent 0 68%,#fff 86%,transparent 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 5s linear infinite}
+@property --a{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes spin{to{--a:360deg}}
+.pick{margin-left:auto;display:inline-flex;align-items:center;gap:.4rem;font-size:.84rem;font-weight:600;padding:.28rem .75rem;border-radius:99px;
+  border:1px solid color-mix(in srgb,var(--tone) 55%,var(--line));color:var(--tone);background:#fff;white-space:nowrap}
+.pick::before{content:"";width:.65rem;height:.65rem;border-radius:50%;border:1.5px solid currentColor}
+.pick::after{content:"Seç"}
+[aria-checked="true"] .pick{background:var(--tone);color:#fff;border-color:var(--tone)}
+[aria-checked="true"] .pick::before{background:#fff;border-color:#fff}
+[aria-checked="true"] .pick::after{content:"Seçildi"}
+
+.row{display:flex;align-items:center;gap:.6rem;min-width:0}
+.letter{flex:none;width:2.1rem;height:2.1rem;border-radius:.6rem;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:1.05rem;color:#fff;background:var(--tone)}
+.focus{font-size:.78rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tone)}
+h2{font-size:1.4rem;font-weight:800;line-height:1.15}
+.kv{display:grid;gap:.15rem}
+.kv dt{font-size:.74rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kv dd{font-size:1.18rem;line-height:1.36}
+.kv dd.soft{color:var(--muted);font-size:1.05rem}
+.cards3{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:1rem}
+
+/* Kart içi küçük görseller */
+.viz{min-height:4.6rem;border-radius:.7rem;background:color-mix(in srgb,var(--tone) 7%,#fff);border:1px solid color-mix(in srgb,var(--tone) 18%,#fff);padding:.55rem .75rem;display:flex;align-items:center}
+.chain{gap:0;justify-content:space-between}
+.chain span{flex:none;font-size:.78rem;font-weight:600;padding:.24rem .5rem;border-radius:99px;background:#fff;border:1px solid color-mix(in srgb,var(--tone) 40%,#fff);color:var(--ink)}
+.chain i{flex:1;height:2px;min-width:.3rem;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 25%,#fff) 0 40%,var(--tone) 50%,color-mix(in srgb,var(--tone) 25%,#fff) 60% 100%);background-size:200% 100%;animation:flow 2.4s linear infinite}
+@keyframes flow{from{background-position:100% 0}to{background-position:-100% 0}}
+.net{gap:1rem}
+.people{display:grid;grid-template-columns:repeat(4,.85rem);gap:.4rem}
+.people b{width:.85rem;height:.85rem;border-radius:50%;background:var(--tone);opacity:.4;animation:pulse 2.6s ease-in-out infinite}
+.people b:nth-child(2n){animation-delay:.6s}.people b:nth-child(3n){animation-delay:1.2s}.people b:nth-child(5n){animation-delay:1.8s}
+@keyframes pulse{50%{opacity:1;transform:scale(1.18)}}
+.net p{font-size:.88rem;color:var(--muted);line-height:1.3}
+.net p strong{display:block;color:var(--ink);font-size:1rem;font-family:var(--display)}
+.steps{gap:.9rem;align-items:flex-end;padding-bottom:.45rem}
+.steps .col{display:grid;justify-items:center;gap:.14rem;flex:1}
+.steps .bar{width:100%;max-width:3.4rem;border-radius:4px 4px 0 0;background:var(--tone)}
+.steps em{font-style:normal;font-size:.74rem;color:var(--muted);line-height:1}
+.steps strong{font-size:.84rem;font-family:var(--display);line-height:1}
+.steps .unit{flex:none;align-self:center;font-size:.76rem;color:var(--muted);max-width:5rem;line-height:1.2}
+
+/* Ortak hedefler */
+.label{font-size:.76rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.45rem}
+.label small{font-weight:500;letter-spacing:0;text-transform:none;font-size:.8rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:.6rem}
+.tile{border:1px solid var(--line);border-radius:.8rem;padding:.55rem .75rem;background:rgba(255,255,255,.9)}
+.tile .num{display:block;font-size:1.65rem;font-weight:800;color:var(--navy);line-height:1.1}
+.tile .num small{font-size:.82rem;font-weight:700;letter-spacing:0}
+.tile span{font-size:.86rem;color:var(--muted);line-height:1.25;display:block}
+
+/* Sayfa 2 */
+.two{display:grid;gap:1rem}
+.left{display:grid;gap:.8rem;align-content:start;min-width:0}
+.mxwrap{overflow-x:auto}
+.mx{display:grid;grid-template-columns:auto repeat(4,minmax(8.2rem,1fr));gap:.45rem .5rem;align-items:stretch;min-width:40rem}
+.mx .th{font-size:.78rem;font-weight:600;color:var(--muted);padding:0 .2rem .1rem}
+.mx .th b{color:var(--ink);font-family:var(--display)}
+.mx .rh{font-family:var(--display);font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:.45rem;padding-right:.4rem}
+.mx .rh i{width:.75rem;height:.75rem;border-radius:3px;background:var(--lc)}
+.mx .cell{display:flex;flex-wrap:wrap;gap:.3rem;align-content:center;padding:.4rem;border-radius:.6rem;background:color-mix(in srgb,var(--lc) 7%,#fff);border:1px solid color-mix(in srgb,var(--lc) 22%,#fff)}
+.u{font-size:.86rem;font-weight:600;padding:.2rem .55rem;border-radius:99px;background:#fff;border:1px solid color-mix(in srgb,var(--lc) 45%,#fff);white-space:nowrap}
+.u em{font-style:normal;font-weight:500;color:var(--muted);font-size:.78rem}
+
+.road{padding:.8rem 1.15rem}
+.track{height:3px;border-radius:99px;background:linear-gradient(90deg,#C9CEEF,var(--navy));position:relative;margin:.2rem 0 .8rem;overflow:hidden}
+.track::after{content:"";position:absolute;top:0;bottom:0;width:18%;background:linear-gradient(90deg,transparent,#fff,transparent);animation:trace 3.8s linear infinite}
+@keyframes trace{from{left:-20%}to{left:110%}}
+.years{display:grid;gap:.9rem}
+.yearcol{display:flex;flex-direction:column}
+.yearcol h3{font-size:1.12rem;font-weight:800;display:flex;align-items:baseline;gap:.4rem;flex-wrap:wrap;margin-bottom:.35rem}
+.yearcol h3 small{font-family:var(--body);font-weight:500;font-size:.8rem;color:var(--muted);letter-spacing:0}
+.ms{display:grid;gap:.22rem;list-style:none;padding:0;font-size:.9rem}
+.ms li{padding-left:.85rem;position:relative}
+.ms li::before{content:"";position:absolute;left:0;top:.52em;width:.38rem;height:.38rem;border-radius:50%;background:var(--navy)}
+.meter{margin-top:auto;padding-top:.55rem;display:grid;gap:.25rem}
+.meter .barw{height:.55rem;border-radius:99px;background:#ECEEF7;overflow:hidden}
+.meter .barw i{display:block;height:100%;border-radius:99px;background:var(--seq-2)}
+.meter p{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.1rem .5rem;font-size:.82rem;color:var(--muted)}
+.meter p span{white-space:nowrap}
+.meter p b{color:var(--ink);font-family:var(--display)}
+
+.roi{display:flex;flex-direction:column;gap:.8rem}
+.roi h2{font-size:1.3rem}
+.roi .sub{font-size:.88rem;color:var(--muted)}
+.scn{display:grid;gap:.55rem}
+.scn .r{display:grid;grid-template-columns:4.8rem 1fr;gap:.6rem;align-items:center;font-size:.92rem}
+.scn .r > span{color:var(--muted)}
+.scn .bw{display:flex;align-items:center;gap:.5rem;min-width:0}
+.scn .b{height:1.7rem;border-radius:0 4px 4px 0;flex:none;min-width:2px}
+.scn .v{white-space:nowrap;font-size:.86rem;color:var(--muted)}
+.scn .v b{font-family:var(--display);font-size:1.2rem;color:var(--ink)}
+.stack{display:flex;gap:2px;height:2rem}
+.stack i{border-radius:3px;min-width:4px}
+.legend{display:grid;gap:.4rem;font-size:.92rem;list-style:none;padding:0}
+.legend li{display:grid;grid-template-columns:.75rem 1fr auto;gap:.55rem;align-items:center}
+.legend li i{width:.75rem;height:.75rem;border-radius:3px}
+.legend li b{font-family:var(--display);font-variant-numeric:tabular-nums}
+.note{font-size:.8rem;color:var(--muted);margin-top:auto}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.92rem;padding:.36rem .75rem;border-radius:99px;background:#fff;border:1px solid var(--line)}
+.chip b{font-family:var(--display);color:var(--navy)}
+[data-tip]{outline:none}
+[data-tip]:focus-visible{box-shadow:0 0 0 2px var(--ink)}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:#fff;font-size:.84rem;padding:.38rem .6rem;border-radius:.45rem;max-width:18rem;opacity:0;transition:opacity .12s}
+#tip.on{opacity:1}
+
+/* Sonuç sayfası (yalnız sunum sahibi) */
+.res{display:grid;gap:1rem;align-content:start}
+.tally{display:grid;gap:.8rem}
+.tally .t{display:grid;grid-template-columns:2.1rem minmax(0,15rem) 1fr auto;gap:.7rem;align-items:center}
+.tally .t strong{font-family:var(--display);font-size:1rem}
+.tally .tb{height:1.5rem;border-radius:0 4px 4px 0;background:var(--tone);min-width:2px;transition:width .4s}
+.tally .tw{background:#ECEEF7;border-radius:0 4px 4px 0}
+.tally .n{font-family:var(--display);font-weight:800;font-size:1.35rem;min-width:2ch;text-align:right}
+.voters{list-style:none;padding:0;display:grid;gap:.35rem;max-height:22rem;overflow:auto;font-size:.95rem}
+.voters li{display:grid;grid-template-columns:1fr auto auto;gap:.8rem;align-items:center;padding:.4rem .6rem;border:1px solid var(--line);border-radius:.6rem;background:#fff}
+.voters li b{font-family:var(--display);color:var(--navy)}
+.voters li time{color:var(--muted);font-size:.84rem;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-size:.95rem}
+
+/* Oy çubuğu */
+.dock{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:.6rem 1rem;flex-wrap:wrap;padding:.65rem 1.2rem;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.dock .sel{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;font-size:.92rem;flex:1 1 18rem;min-width:0}
+.dock .sel strong{font-family:var(--display);font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pill{padding:.28rem .75rem;border-radius:99px;border:1px solid var(--line);background:#fff}
+.pill.set{border-color:var(--navy);color:var(--navy);font-weight:600}
+.btn{border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:.55rem;padding:.42rem .95rem;font-size:.92rem;font-weight:600}
+.btn:hover{background:#232A7C}
+.btn:disabled{background:#C9CDE6;border-color:#C9CDE6;cursor:not-allowed}
+.btn:focus-visible,.tab:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#vstat{color:var(--muted);font-size:.86rem}
+#vstat.ok{color:var(--teal);font-weight:600}
+.tabs{display:none;gap:.3rem;padding:.2rem;border-radius:.7rem;background:#ECEEF7}
+.tab{border:0;background:transparent;padding:.38rem .85rem;border-radius:.5rem;font-size:.9rem;font-weight:600;color:var(--muted)}
+.tab[aria-selected="true"]{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(23,28,71,.15)}
+
+.swipe{display:none;font-size:.88rem;color:var(--muted)}
+.fold{all:unset;display:block;width:100%;box-sizing:border-box}
+.foldbody{display:contents}
+.roi .foldbody > .sub:first-child{margin-top:-.55rem}
+#ad{font:inherit;color:var(--ink);padding:.4rem .7rem;border:1px solid var(--line);border-radius:.55rem;background:#fff;min-width:0;flex:1 1 9rem;max-width:16rem}
+#ad:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
+@media (max-width:759px){
+  .swipe{display:block}
+  .cards3{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:.8rem;margin:0 -1.2rem;padding:.2rem 1.2rem .6rem;scrollbar-width:none}
+  .cards3::-webkit-scrollbar{display:none}
+  .cards3 .opt{flex:0 0 86%;scroll-snap-align:center}
+  .opt:hover{transform:none}
+  .tiles{grid-template-columns:1fr 1fr}
+  .fold{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.8rem}
+  .fold::after{content:"";flex:none;width:.6rem;height:.6rem;border-right:2px solid var(--navy);border-bottom:2px solid var(--navy);transform:rotate(-135deg);transition:transform .2s;margin:0 .2rem}
+  .shut .fold::after{transform:rotate(45deg)}
+  .fold:focus-visible{outline:2px solid var(--navy);outline-offset:4px;border-radius:.3rem}
+  .shut .foldbody{display:none}
+  .shut .label{margin-bottom:0}
+  .dock{padding:.55rem .9rem}
+}
+@media (min-width:760px){
+  .fold{pointer-events:none}
+  .years{grid-template-columns:.85fr 1.25fr 1fr 1fr}
+  .yearcol + .yearcol{border-left:1px solid var(--line);padding-left:.85rem}
+  .res{grid-template-columns:1.2fr 1fr}
+}
+
+/* Sunum kipi: her sayfa tek ekrana sığar */
+@media (min-width:1000px) and (min-height:560px){
+  html{font-size:clamp(12.5px,min(1.1vw,1.96vh),22px);height:100%}
+  body{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+  .top{padding:.5rem 2.2rem}
+  .deck{min-height:0}
+  .slide{position:absolute;inset:0;display:none;grid-template-rows:auto 1fr auto;align-content:stretch;padding:.9rem 2.2rem;overflow-y:auto;border:0 !important}
+  .slide.on{display:grid}
+  .cards3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tiles{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .two{grid-template-columns:minmax(0,1.62fr) minmax(0,1fr)}
+  .left{grid-template-rows:auto 1fr}
+  .mx{min-width:0;grid-template-columns:auto minmax(0,1.6fr) repeat(3,minmax(0,1fr))}
+  .road{display:flex;flex-direction:column}
+  .years{flex:1}
+  .dock{position:relative;padding:.5rem 2.2rem}
+  .tabs{display:flex}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><div class="dots"></div><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div></div>
+
+<header class="top">
+  <div class="brand"><b class="mark">SASA</b><div><strong>Şirket Geneli Yapay Zeka Programı · 2027–2029</strong><span>Orta Doğu ve Avrupa'nın lider polyester üreticisi</span></div></div>
+  <small>Yönetici karar sunumu · 14.11.2026</small>
+</header>
+
+<main class="deck">
+
+<!-- SAYFA 1 -->
+<section class="slide on" id="yon" aria-label="Sayfa 1: Vizyon ve misyon seçimi">
+  <div class="head">
+    <p class="eyebrow shiny">Sayfa 1 · Vizyon ve misyon</p>
+    <h1>Hangi vizyon ve misyonla yola çıkıyoruz?</h1>
+    <p class="lede">Üç seçenek var. Birini seçip alttaki çubuktan oyunuzu gönderin.</p>
+    <p class="swipe">Seçenekler arasında sağa ve sola kaydırın.</p>
+  </div>
+
+  <div class="cards3" role="radiogroup" aria-label="Vizyon ve misyon seçenekleri">
+
+    <article class="card magic opt" data-val="A" role="radio" aria-checked="false" tabindex="0" style="--tone:var(--steel)">
+      <div class="row"><span class="letter">A</span><span class="focus">Değer zinciri</span><span class="pick"></span></div>
+      <h2>Akıllı Entegre Polyester</h2>
+      <div class="viz chain" aria-hidden="true"><span>Paraksilen</span><i></i><span>PTA</span><i></i><span>Polimer</span><i></i><span>Elyaf</span><i></i><span>İplik</span></div>
+      <dl class="kv"><dt>Vizyon</dt><dd>Orta Doğu ve Avrupa'nın lider polyester üreticisi olarak, paraksilenden ipliğe her kararı canlı veri ve yapay zekayla vermek.</dd></dl>
+      <dl class="kv"><dt>Misyon</dt><dd class="soft">Şirket bilgisini yerel altyapıda tutarak her çalışana bir asistan, her işletmeye ölçülebilir değer üreten akıllı uygulamalar sağlamak.</dd></dl>
+    </article>
+
+    <article class="card magic opt" data-val="B" role="radio" aria-checked="false" tabindex="0" style="--tone:var(--teal)">
+      <div class="row"><span class="letter">B</span><span class="focus">İnsan ve birikim</span><span class="pick"></span></div>
+      <h2>Öğrenen Fabrika</h2>
+      <div class="viz net" aria-hidden="true">
+        <div class="people"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+        <p><strong>60 yıllık tecrübe</strong>her çalışanın elinin altında</p>
+      </div>
+      <dl class="kv"><dt>Vizyon</dt><dd>60 yıllık üretim tecrübesini her çalışanın elinin altına koyan, her gün biraz daha öğrenen bir SASA olmak.</dd></dl>
+      <dl class="kv"><dt>Misyon</dt><dd class="soft">Ustaların bilgisini yapay zekaya aktarmak; kademeli eğitimle herkesi kullanıcı yapmak; sahadan gelen fikri hızla canlı çözüme çevirmek.</dd></dl>
+    </article>
+
+    <article class="card magic opt" data-val="C" role="radio" aria-checked="false" tabindex="0" style="--tone:var(--bronze)">
+      <div class="row"><span class="letter">C</span><span class="focus">Maliyet ve getiri</span><span class="pick"></span></div>
+      <h2>Her Tonda Kazanç</h2>
+      <div class="viz steps" role="img" aria-label="Yıllık FAVÖK etkisi hedefi: 2027 en az 2, 2028 en az 5, 2029 en az 10 milyon dolar">
+        <div class="col"><strong>≥2</strong><div class="bar" style="height:.5rem" data-tip="2027 hedefi: yıllık en az 2 milyon $ FAVÖK etkisi" tabindex="0"></div><em>2027</em></div>
+        <div class="col"><strong>≥5</strong><div class="bar" style="height:1.1rem" data-tip="2028 hedefi: yıllık en az 5 milyon $ FAVÖK etkisi" tabindex="0"></div><em>2028</em></div>
+        <div class="col"><strong>≥10</strong><div class="bar" style="height:2.2rem" data-tip="2029 hedefi: yıllık en az 10 milyon $ FAVÖK etkisi" tabindex="0"></div><em>2029</em></div>
+        <span class="unit">milyon $ / yıl FAVÖK etkisi</span>
+      </div>
+      <dl class="kv"><dt>Vizyon</dt><dd>Yapay zekayı maliyet liderliğimizin ikinci motoru yapmak; ürettiğimiz her tonda daha az enerji, daha az duruş, daha az fire.</dd></dl>
+      <dl class="kv"><dt>Misyon</dt><dd class="soft">Enerji, bakım, verim ve stokta hedefi baştan koymak, sonucu finansla birlikte ölçmek; kazandıran çözümü tüm işletmelere yaymak.</dd></dl>
+    </article>
+  </div>
+
+  <div>
+    <p class="label">2029 sonu hedefleri · hangi seçenek seçilirse seçilsin aynı <small>(FAVÖK: faiz, amortisman ve vergi öncesi kâr)</small></p>
+    <div class="tiles">
+      <div class="tile"><b class="num" data-to="70" data-pre="%">%70</b><span>beyaz yakada aylık aktif kullanım</span></div>
+      <div class="tile"><b class="num" data-to="4">4</b><span>işletmede canlı portal: PTA, polimer, elyaf, iplik</span></div>
+      <div class="tile"><b class="num" data-to="40" data-suf="+">40+</b><span>canlı kullanım alanı</span></div>
+      <div class="tile"><b class="num">≥10 <small>milyon $</small></b><span>yıllık FAVÖK etkisi</span></div>
+      <div class="tile"><b class="num" data-to="20" data-pre="%">%20</b><span>daha az plansız duruş günü</span></div>
+      <div class="tile"><b class="num" data-to="8">8</b><span>yapay zeka sorumlusu</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SAYFA 2 -->
+<section class="slide" id="plan" aria-label="Sayfa 2: Üç yıllık plan ve getiri">
+  <div class="head">
+    <p class="eyebrow shiny">Sayfa 2 · 3 yıllık plan ve getiri</p>
+    <h1>Kim ne zaman başlıyor, şirkete ne kazandırıyor?</h1>
+  </div>
+
+  <div class="two">
+    <div class="left">
+      <div class="card">
+        <p class="label"><button type="button" class="fold" aria-expanded="true">İki hat birlikte ilerler: işletmeler ve fonksiyonlar</button></p>
+        <div class="foldbody"><div class="mxwrap">
+          <div class="mx">
+            <span></span>
+            <span class="th"><b>2027</b> · 1. çeyrek</span><span class="th"><b>2027</b> · 2. çeyrek</span><span class="th"><b>2027</b> · 3.–4. çeyrek</span><span class="th"><b>2028</b></span>
+            <span class="rh" style="--lc:var(--c1)"><i></i>İşletmeler</span>
+            <div class="cell" style="--lc:var(--c1)"><span class="u">PTA <em>canlı</em></span></div>
+            <div class="cell" style="--lc:var(--c1)"><span class="u">Polimer</span></div>
+            <div class="cell" style="--lc:var(--c1)"><span class="u">Elyaf</span></div>
+            <div class="cell" style="--lc:var(--c1)"><span class="u">İplik</span></div>
+            <span class="rh" style="--lc:var(--c3)"><i></i>Fonksiyonlar</span>
+            <div class="cell" style="--lc:var(--c3)"><span class="u">Satınalma</span><span class="u">İnsan kaynakları</span><span class="u">İş güvenliği</span></div>
+            <div class="cell" style="--lc:var(--c3)"><span class="u">Muhasebe</span><span class="u">İthalat</span></div>
+            <div class="cell" style="--lc:var(--c3)"><span class="u">Satış</span></div>
+            <div class="cell" style="--lc:var(--c3)"><span class="u">Güvenlik</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="card road">
+        <p class="label"><button type="button" class="fold" aria-expanded="true">Takvim ve yıl sonu ölçütleri</button></p>
+        <div class="foldbody"><div class="track" aria-hidden="true"></div>
+        <div class="years">
+          <div class="yearcol">
+            <h3>Hazırlık <small>Aralık 2026</small></h3>
+            <ul class="ms"><li>Yönetim yetki yazısı</li><li>Yönlendirme kurulu</li><li>Sunucu kurulumu ve yük testi</li></ul>
+          </div>
+          <div class="yearcol">
+            <h3>2027 <small>kuruluş</small></h3>
+            <ul class="ms"><li>Çekirdek ekip ve 8 sorumlu</li><li>6 hızlı kazanım, fikir kampanyası</li><li>Kalite tahmini ve kestirimci bakım pilotları</li></ul>
+            <div class="meter"><div class="barw" data-tip="2027 sonu: beyaz yakada %40 aylık aktif kullanım" tabindex="0"><i style="width:40%"></i></div><p><span>aktif kullanım <b>%40</b></span><span>getiri <b>≥2 milyon $</b></span></p></div>
+          </div>
+          <div class="yearcol">
+            <h3>2028 <small>ölçekleme</small></h3>
+            <ul class="ms"><li>Kestirimci bakım yaygınlaşır</li><li>Talep ve nakit akış tahmini</li><li>Yedek sunucu</li></ul>
+            <div class="meter"><div class="barw" data-tip="2028 sonu: beyaz yakada %55 aylık aktif kullanım" tabindex="0"><i style="width:55%"></i></div><p><span>aktif kullanım <b>%55</b></span><span>getiri <b>≥5 milyon $</b></span></p></div>
+          </div>
+          <div class="yearcol">
+            <h3>2029 <small>otomasyon</small></h3>
+            <ul class="ms"><li>İnsan onaylı ajan iş akışları</li><li>Tüm hatlarda kalite tahmini</li><li>Görüntü işleme ile kalite kontrol</li></ul>
+            <div class="meter"><div class="barw" data-tip="2029 sonu: beyaz yakada %70 aylık aktif kullanım" tabindex="0"><i style="width:70%"></i></div><p><span>aktif kullanım <b>%70</b></span><span>getiri <b>≥10 milyon $</b></span></p></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card roi">
+      <h2><button type="button" class="fold" aria-expanded="true">Şirkete getirisi</button></h2>
+      <div class="foldbody">
+      <p class="sub">3. yılda yıllık FAVÖK (faiz, amortisman ve vergi öncesi kâr) etkisi, milyon $</p>
+      <div class="scn" role="img" aria-label="Üç senaryo: temkinli 3,5; baz 9,3; iyimser 18,5 milyon dolar">
+        <div class="r"><span>Temkinli</span><div class="bw"><i class="b" style="width:11.4%;background:var(--seq-1)" data-tip="Temkinli: 3,5 milyon $ / yıl · son 12 ay FAVÖK'ünün %1,2'si" tabindex="0"></i><span class="v"><b class="num">3,5</b> · %1,2</span></div></div>
+        <div class="r"><span>Baz</span><div class="bw"><i class="b" style="width:30.2%;background:var(--seq-2)" data-tip="Baz: 9,3 milyon $ / yıl · son 12 ay FAVÖK'ünün %3,1'i" tabindex="0"></i><span class="v"><b class="num">9,3</b> · %3,1</span></div></div>
+        <div class="r"><span>İyimser</span><div class="bw"><i class="b" style="width:60%;background:var(--seq-3)" data-tip="İyimser: 18,5 milyon $ / yıl · son 12 ay FAVÖK'ünün %6,2'si" tabindex="0"></i><span class="v"><b class="num">18,5</b> · %6,2</span></div></div>
+      </div>
+      <p class="sub" style="margin-top:-.2rem">Yüzdeler: son 12 ay FAVÖK'ü olan 299 milyon $'a oranı.</p>
+
+      <div>
+        <p class="label">Baz senaryoda getirinin kaynağı</p>
+        <div class="stack" role="img" aria-label="Baz senaryo 9,3 milyon doların kaynaklara dağılımı">
+          <i style="flex:2.5;background:var(--c1)" data-tip="Plansız duruşun azalması: 2,5 milyon $" tabindex="0"></i>
+          <i style="flex:2.5;background:var(--c2)" data-tip="Verim, kalite ve enerji: 2,5 milyon $" tabindex="0"></i>
+          <i style="flex:1.2;background:var(--c3)" data-tip="Bakım maliyeti: 1,2 milyon $" tabindex="0"></i>
+          <i style="flex:2.3;background:var(--c4)" data-tip="Stok ve satınalma: 2,3 milyon $" tabindex="0"></i>
+          <i style="flex:.8;background:var(--c5)" data-tip="Ofis çalışanlarının kazandığı zaman: 0,8 milyon $" tabindex="0"></i>
+        </div>
+      </div>
+      <ul class="legend">
+        <li><i style="background:var(--c1)"></i>Plansız duruşun azalması<b>2,5</b></li>
+        <li><i style="background:var(--c2)"></i>Verim, kalite ve enerji<b>2,5</b></li>
+        <li><i style="background:var(--c3)"></i>Bakım maliyeti<b>1,2</b></li>
+        <li><i style="background:var(--c4)"></i>Stok ve satınalma<b>2,3</b></li>
+        <li><i style="background:var(--c5)"></i>Ofis çalışanlarının kazandığı zaman<b>0,8</b></li>
+      </ul>
+      <p class="note">Çerçeve hesaptır: kamuya açık SASA verileri ve sektör kıyaslarına dayanır. Enerji, bakım, duruş ve stok kalemleri finans verisiyle teyit edilecek.</p>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="label">Her işletme ve birimden beklenen</p>
+    <div class="chips">
+      <span class="chip"><b>1</b> yapay zeka sorumlusu</span>
+      <span class="chip"><b>Ayda 2 saat</b> atölye</span>
+      <span class="chip"><b>İlk 3</b> kullanım fikri</span>
+      <span class="chip"><b>1</b> veri sahibi</span>
+      <span class="chip"><b>90 günde</b> ölçülen ilk sonuç</span>
+    </div>
+  </div>
+</section>
+
+<!-- SONUÇ: yalnız sunum sahibine açılır -->
+<section class="slide" id="sonuc" aria-label="Oylama sonucu" hidden>
+  <div class="head">
+    <p class="eyebrow">Yalnızca sunum sahibi ve düzenleyiciler görür</p>
+    <h1>Oylama sonucu</h1>
+    <p class="lede" id="r-sum">Oylar yükleniyor…</p>
+  </div>
+  <div class="res">
+    <div class="card">
+      <p class="label">Seçeneklere göre oy</p>
+      <div class="tally" id="tally"></div>
+    </div>
+    <div class="card">
+      <p class="label">Kim neyi seçti</p>
+      <ul class="voters" id="voters"></ul>
+      <p class="empty" id="r-empty">Henüz oy yok. Paylaştığınız kişiler oy verdikçe burada görünür.</p>
+    </div>
+  </div>
+  <div></div>
+</section>
+</main>
+
+<footer class="dock">
+  <div class="sel">
+    <strong>Oyunuz</strong>
+    <span class="pill" id="p-sel">Seçilmedi</span>
+    <input id="ad" type="text" placeholder="Ad Soyad" aria-label="Ad Soyad" autocomplete="name" maxlength="80" hidden>
+    <button class="btn" id="send" type="button" disabled>Oyumu gönder</button>
+    <span id="vstat" role="status">Oylama bağlantısı kuruluyor…</span>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Sayfalar">
+    <button class="tab" role="tab" data-go="yon" aria-selected="true" type="button">1 · Vizyon ve misyon</button>
+    <button class="tab" role="tab" data-go="plan" aria-selected="false" type="button">2 · Plan ve getiri</button>
+    <button class="tab" role="tab" data-go="sonuc" aria-selected="false" type="button" id="t-sonuc" hidden>Oylama sonucu</button>
+  </div>
+</footer>
+<div id="tip" role="status"></div>
+
+<script src="ayar.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function(){
+  var NAMES={A:"A · Akıllı Entegre Polyester",B:"B · Öğrenen Fabrika",C:"C · Her Tonda Kazanç"};
+  var TONES={A:"var(--steel)",B:"var(--teal)",C:"var(--bronze)"};
+  var KEY="sasa-yz-oy", state=null, sent=null;
+  try{var s=localStorage.getItem(KEY);if(s&&NAMES[s])state=s;}catch(e){}
+  var opts=[].slice.call(document.querySelectorAll(".opt"));
+  var pill=document.getElementById("p-sel"),send=document.getElementById("send"),vstat=document.getElementById("vstat");
+  var mode="wait"; /* wait | ready | local | readonly */
+
+  function say(t,ok){vstat.textContent=t;vstat.classList.toggle("ok",!!ok);}
+  function paint(){
+    opts.forEach(function(o){o.setAttribute("aria-checked",state===o.dataset.val?"true":"false");});
+    pill.textContent=state?NAMES[state]:"Seçilmedi";
+    pill.classList.toggle("set",!!state);
+    send.disabled=!(mode==="ready"&&state&&state!==sent);
+    if(mode==="ready"){
+      if(sent&&state===sent)say("Oyunuz kaydedildi. Değiştirmek için başka bir kart seçip yeniden gönderin.",true);
+      else if(sent)say("Kayıtlı oyunuz: "+sent+". Yeni seçimi göndermek için düğmeye basın.");
+      else say(state?"Göndermek için düğmeye basın.":"Bir kart seçin.");
+    }
+  }
+  function choose(o){
+    state=o.dataset.val;
+    try{localStorage.setItem(KEY,state);}catch(e){}
+    paint();
+  }
+  opts.forEach(function(o){
+    o.addEventListener("click",function(){choose(o);});
+    o.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();choose(o);}});
+  });
+  paint();
+
+  /* Sayfa geçişi */
+  var slides=[].slice.call(document.querySelectorAll(".slide")),tabs=[].slice.call(document.querySelectorAll(".tab"));
+  var wide=window.matchMedia("(min-width:1000px) and (min-height:560px)");
+  function show(id,fromHash){
+    var el=document.getElementById(id);
+    if(!el||el.hidden){id="yon";el=document.getElementById(id);}
+    slides.forEach(function(s){s.classList.toggle("on",s.id===id);});
+    tabs.forEach(function(t){t.setAttribute("aria-selected",t.dataset.go===id?"true":"false");});
+    if(!fromHash){try{history.replaceState(null,"","#"+id);}catch(e){}}
+    if(!wide.matches&&!fromHash)el.scrollIntoView({behavior:"smooth"});
+  }
+  tabs.forEach(function(t){t.addEventListener("click",function(){show(t.dataset.go);});});
+  window.addEventListener("hashchange",function(){show(location.hash.slice(1)||"yon",true);});
+  document.addEventListener("keydown",function(e){
+    if(!wide.matches)return;
+    var order=slides.filter(function(s){return !s.hidden;}).map(function(s){return s.id;});
+    var i=order.indexOf((document.querySelector(".slide.on")||{}).id);
+    if((e.key==="ArrowRight"||e.key==="PageDown")&&i<order.length-1)show(order[i+1]);
+    if((e.key==="ArrowLeft"||e.key==="PageUp")&&i>0)show(order[i-1]);
+  });
+  if(location.hash.length>1)show(location.hash.slice(1),true);
+
+  /* Telefonda sayfa 2 bölümleri kapalı açılır */
+  var phone=window.matchMedia("(max-width:759px)");
+  document.querySelectorAll(".fold").forEach(function(b){
+    var card=b.closest(".card");
+    function set(shut){card.classList.toggle("shut",shut);b.setAttribute("aria-expanded",shut?"false":"true");}
+    if(phone.matches)set(true);else b.tabIndex=-1;
+    b.addEventListener("click",function(){if(phone.matches)set(!card.classList.contains("shut"));});
+  });
+
+  /* Fareyi izleyen ışık */
+  document.querySelectorAll(".magic").forEach(function(c){
+    c.addEventListener("pointermove",function(e){var r=c.getBoundingClientRect();c.style.setProperty("--mx",(e.clientX-r.left)+"px");c.style.setProperty("--my",(e.clientY-r.top)+"px");});
+  });
+
+  /* İpucu */
+  var tip=document.getElementById("tip");
+  function tipAt(x,y,t){tip.textContent=t;tip.classList.add("on");var w=tip.offsetWidth,h=tip.offsetHeight;
+    tip.style.left=Math.max(8,Math.min(window.innerWidth-w-8,x+12))+"px";tip.style.top=Math.max(8,y-h-10)+"px";}
+  document.querySelectorAll("[data-tip]").forEach(function(el){
+    el.addEventListener("pointermove",function(e){tipAt(e.clientX,e.clientY,el.dataset.tip);});
+    el.addEventListener("pointerleave",function(){tip.classList.remove("on");});
+    el.addEventListener("focus",function(){var r=el.getBoundingClientRect();tipAt(r.left+r.width/2,r.top,el.dataset.tip);});
+    el.addEventListener("blur",function(){tip.classList.remove("on");});
+    el.addEventListener("click",function(e){e.stopPropagation();});
+  });
+
+  /* Oylama: oylar sayfanın ortak veri deposunda tutulur; herkes yalnız kendi oyunu yazar */
+  function localOnly(){mode="local";send.hidden=true;say("Bu görünümde oy gönderilemiyor; seçiminiz yalnızca bu cihazda kalır.");paint();}
+  function fmtDate(iso){var d=new Date(iso);if(isNaN(d))return "";var p=function(n){return (n<10?"0":"")+n;};
+    return p(d.getDate())+"."+p(d.getMonth()+1)+"."+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes());}
+
+  function results(db,user){
+    document.getElementById("sonuc").hidden=false;
+    document.getElementById("t-sonuc").hidden=false;
+    var tally=document.getElementById("tally"),list=document.getElementById("voters"),sum=document.getElementById("r-sum"),empty=document.getElementById("r-empty");
+    var rows={};
+    Object.keys(NAMES).forEach(function(k){
+      var t=document.createElement("div");t.className="t";t.style.setProperty("--tone",TONES[k]);
+      var l=document.createElement("span");l.className="letter";l.textContent=k;
+      var n=document.createElement("strong");n.textContent=NAMES[k].slice(4);
+      var w=document.createElement("div");w.className="tw";var b=document.createElement("div");b.className="tb";b.style.width="0%";w.appendChild(b);
+      var c=document.createElement("span");c.className="n num";c.textContent="0";
+      t.appendChild(l);t.appendChild(n);t.appendChild(w);t.appendChild(c);tally.appendChild(t);rows[k]={b:b,c:c};
+    });
+    var timer=setTimeout(function(){sum.textContent="Oylara şu an ulaşılamıyor; bağlantı kurulunca kendiliğinden görünür.";},10000);
+    var seq=0;
+    db.collection("votes").onSnapshot(function(q){
+      if(!q.metadata.fromCache)clearTimeout(timer);
+      var votes=[],cnt={A:0,B:0,C:0};
+      q.docs.forEach(function(d){var v=d.data()||{};if(NAMES[v.choice]){cnt[v.choice]++;votes.push({id:d.id,choice:v.choice,at:typeof v.at==="string"?v.at:""});}});
+      var total=votes.length,max=Math.max(1,cnt.A,cnt.B,cnt.C);
+      Object.keys(rows).forEach(function(k){rows[k].c.textContent=cnt[k];rows[k].b.style.width=(cnt[k]/max*100)+"%";});
+      sum.textContent="Toplam "+total+" oy.";
+      empty.hidden=total>0;
+      votes.sort(function(a,b){return a.at<b.at?1:-1;});
+      var my=++seq;
+      Promise.resolve(user.profiles(votes.map(function(v){return v.id;}))).then(function(ps){
+        if(my!==seq)return;
+        list.textContent="";
+        votes.forEach(function(v){
+          var li=document.createElement("li"),nm=document.createElement("span"),ch=document.createElement("b"),tm=document.createElement("time");
+          nm.textContent=(ps&&ps[v.id]&&ps[v.id].name)||"İsim görünmüyor";ch.textContent=v.choice;tm.textContent=fmtDate(v.at);
+          li.appendChild(nm);li.appendChild(ch);li.appendChild(tm);list.appendChild(li);
+        });
+      });
+    },function(){clearTimeout(timer);sum.textContent="Oylar okunamadı. Sayfayı daha sonra yeniden açın.";});
+  }
+
+  /* Bağımsız yayın (GitHub): oylar ayar.js içindeki adrese yazılır */
+  var API=(typeof window.OY_API==="string"&&/^https:\/\//.test(window.OY_API))?window.OY_API:"";
+  function jsonp(params){
+    return new Promise(function(res,rej){
+      var cb="oycb"+Date.now()+Math.floor(Math.random()*1e4),sc=document.createElement("script");
+      var t=setTimeout(function(){done();rej(new Error("zaman"));},15000);
+      function done(){clearTimeout(t);try{delete window[cb];}catch(e){window[cb]=undefined;}sc.remove();}
+      window[cb]=function(d){done();res(d);};
+      sc.onerror=function(){done();rej(new Error("ag"));};
+      var q=Object.keys(params).map(function(k){return encodeURIComponent(k)+"="+encodeURIComponent(params[k]);}).join("&");
+      sc.src=API+(API.indexOf("?")<0?"?":"&")+q+"&callback="+cb;
+      document.head.appendChild(sc);
+    });
+  }
+  function apiFlow(){
+    var ad=document.getElementById("ad"),cihaz="";
+    try{cihaz=localStorage.getItem("sasa-yz-cihaz")||"";if(!cihaz){cihaz="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem("sasa-yz-cihaz",cihaz);}
+        ad.value=localStorage.getItem("sasa-yz-ad")||"";var g=localStorage.getItem("sasa-yz-gonderilen");if(g&&NAMES[g])sent=g;}catch(e){}
+    if(!cihaz)cihaz="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+    ad.hidden=false;mode="ready";paint();
+    var busy=false;
+    send.addEventListener("click",function(){
+      if(busy||!state)return;
+      var isim=ad.value.trim();
+      if(isim.length<3){say("Önce adınızı ve soyadınızı yazın.");ad.focus();return;}
+      busy=true;send.disabled=true;say("Gönderiliyor…");
+      jsonp({islem:"oy",secim:state,ad:isim,cihaz:cihaz}).then(function(r){
+        busy=false;
+        if(r&&r.ok){sent=state;try{localStorage.setItem("sasa-yz-ad",isim);localStorage.setItem("sasa-yz-gonderilen",sent);}catch(e){}paint();}
+        else{say("Oy kaydedilemedi. Yeniden deneyin.");send.disabled=false;}
+      },function(){busy=false;say("Bağlantı kurulamadı. İnternetinizi kontrol edip yeniden deneyin.");send.disabled=false;});
+    });
+  }
+
+  (async function(){
+    if(!(window.claude&&typeof window.claude.use==="function")){if(API)apiFlow();else localOnly();return;}
+    var db=null,user=null;
+    try{var r=await Promise.all([window.claude.use("db"),window.claude.use("user")]);db=r[0];user=r[1];}catch(e){}
+    if(!db||!user){localOnly();return;}
+    var uid=null;try{uid=await user.id();}catch(e){}
+    if(!uid){localOnly();return;}
+    var mine=db.doc("votes/"+uid);
+    try{var snap=await mine.get();if(snap.exists){var d=snap.data()||{};if(NAMES[d.choice]){sent=d.choice;if(!state)state=sent;}}}catch(e){}
+    var canWrite=null;try{canWrite=await user.can("data.write");}catch(e){}
+    if(canWrite===false){mode="readonly";send.hidden=true;say("Oy verebilmek için sunumun sizinle katkıda bulunan yetkisiyle paylaşılması gerekir.");}
+    else mode="ready";
+    paint();
+    var busy=false;
+    send.addEventListener("click",async function(){
+      if(busy||!state||mode!=="ready")return;
+      busy=true;send.disabled=true;say("Gönderiliyor…");
+      try{await mine.set({choice:state,at:new Date().toISOString()});sent=state;}
+      catch(e){
+        if(e&&e.code==="invalid_argument"){mode="readonly";send.hidden=true;say("Oy verebilmek için sunumun sizinle katkıda bulunan yetkisiyle paylaşılması gerekir.");busy=false;return;}
+        say("Oy gönderilemedi. Biraz sonra yeniden deneyin.");busy=false;send.disabled=false;return;
+      }
+      busy=false;paint();
+    });
+    var admin=false;try{admin=!!(await user.isOwner())||!!(await user.canEdit());}catch(e){}
+    if(admin)results(db,user);
+  })();
+
+  /* Giriş hareketi ve sayaçlar: içerik hareketsiz halde de eksiksizdir */
+  var calm=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if(window.gsap&&!calm){
+    gsap.from(".slide.on .card",{y:14,opacity:.2,duration:.55,stagger:.06,ease:"power2.out",clearProps:"transform,opacity"});
+    var fmt=new Intl.NumberFormat("tr-TR");
+    document.querySelectorAll(".num[data-to]").forEach(function(n){
+      var to=+n.dataset.to,pre=n.dataset.pre||"",suf=n.dataset.suf||"",o={v:0},fin=n.textContent;
+      gsap.to(o,{v:to,duration:1.1,ease:"power2.out",onUpdate:function(){n.textContent=pre+fmt.format(Math.round(o.v))+suf;},onComplete:function(){n.textContent=fin;}});
+    });
+  }
+})();
+</script>
+</body>
+</html>
