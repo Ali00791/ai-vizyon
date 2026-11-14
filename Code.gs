@@ -5,7 +5,8 @@
  * Fikir portalından gelen öneriler "Oneriler" sayfasına yazılır.
  */
 const SAYFA = 'Oylar';
-const YONETIM_SIFRESI = 'DEGISTIR';   // Yönetim sayfasının şifresi: kendi şifrenizi yazın.
+const YONETIM_SIFRESI = 'DEGISTIR';
+const OY_METIN_SINIRI = 20000;   // D önerisinde vizyon ve misyon için üst sınır (pratikte sınırsız; tablo hücresi 50.000 karakter alır)   // Yönetim sayfasının şifresi: kendi şifrenizi yazın.
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
@@ -14,6 +15,7 @@ function doGet(e) {
     if (p.islem === 'oy') sonuc = oyYaz(p);
     else if (p.islem === 'liste') sonuc = liste(p);
     else if (p.islem === 'var') sonuc = fikirVarMi(p);
+    else if (p.islem === 'oyvar') sonuc = oyVarMi(p);
     else if (p.islem === 'oneriler') sonuc = fikirListe(p);
     else sonuc = { ok: false, hata: 'bilinmeyen islem' };
   } catch (err) {
@@ -33,9 +35,9 @@ function sayfa() {
   let sh = ss.getSheetByName(SAYFA);
   if (!sh) {
     sh = ss.insertSheet(SAYFA);
-    sh.appendRow(['Zaman', 'Ad Soyad', 'Seçim', 'Cihaz', 'Vizyon Önerisi', 'Misyon Önerisi']);
-  } else if (sh.getLastColumn() < 6) {
-    sh.getRange(1, 5, 1, 2).setValues([['Vizyon Önerisi', 'Misyon Önerisi']]);
+    sh.appendRow(['Zaman', 'Ad Soyad', 'Seçim', 'Cihaz', 'Vizyon Önerisi', 'Misyon Önerisi', 'Kayıt No']);
+  } else if (sh.getLastColumn() < 7) {
+    sh.getRange(1, 5, 1, 3).setValues([['Vizyon Önerisi', 'Misyon Önerisi', 'Kayıt No']]);
   }
   return sh;
 }
@@ -52,18 +54,33 @@ function oyYaz(p) {
   if (['A', 'B', 'C', 'D'].indexOf(secim) < 0) return { ok: false, hata: 'gecersiz secim' };
   const ad = temiz(p.ad, 80);
   if (ad.length < 3) return { ok: false, hata: 'ad gerekli' };
-  const vizyon = secim === 'D' ? temiz(p.vizyon, 400) : '';
-  const misyon = secim === 'D' ? temiz(p.misyon, 400) : '';
+  const vizyon = secim === 'D' ? temiz(p.vizyon, OY_METIN_SINIRI) : '';
+  const misyon = secim === 'D' ? temiz(p.misyon, OY_METIN_SINIRI) : '';
+  const id = kayitNo(p.id);
   if (secim === 'D' && vizyon.length < 10 && misyon.length < 10) return { ok: false, hata: 'oneri gerekli' };
   const cihaz = String(p.cihaz || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
   const kilit = LockService.getScriptLock();
   kilit.waitLock(10000);
   try {
-    sayfa().appendRow([new Date(), ad, secim, cihaz, vizyon, misyon]);
+    const sh = sayfa();
+    if (id && oyIdleri(sh).indexOf(id) >= 0) return { ok: true, tekrar: true };   // aynı gönderim ikinci kez yazılmaz
+    sh.appendRow([new Date(), ad, secim, cihaz, vizyon, misyon, id]);
   } finally {
     kilit.releaseLock();
   }
   return { ok: true };
+}
+
+function oyIdleri(sh) {
+  const son = sh.getLastRow();
+  if (son < 2 || sh.getLastColumn() < 7) return [];
+  return sh.getRange(2, 7, son - 1, 1).getValues().map(function (r) { return String(r[0]); });
+}
+
+function oyVarMi(p) {
+  const id = kayitNo(p.id);
+  if (id.length < 6) return { ok: false, hata: 'kayit no gerekli' };
+  return { ok: true, var: oyIdleri(sayfa()).indexOf(id) >= 0 };
 }
 
 function liste(p) {
@@ -97,6 +114,7 @@ function doPost(e) {
   try {
     const v = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (v.islem === 'oneri') sonuc = fikirYaz(v);
+    else if (v.islem === 'oy') sonuc = oyYaz(v);
     else sonuc = { ok: false, hata: 'bilinmeyen islem' };
   } catch (err) {
     sonuc = { ok: false, hata: String(err) };

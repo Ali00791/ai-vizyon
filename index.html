@@ -105,7 +105,7 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
 .own-d .df{display:grid;gap:.6rem}
 .own-d label{display:grid;gap:.2rem;font-size:.74rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .own-d textarea{font:inherit;font-size:.98rem;letter-spacing:0;text-transform:none;color:var(--ink);padding:.45rem .65rem;border:1px solid var(--line);border-radius:.6rem;resize:vertical;min-height:2.6rem;height:2.6rem;background:#fff}
-.own-d textarea:focus{outline:3px solid color-mix(in srgb,var(--navy) 18%,transparent);border-color:var(--navy)}
+.own-d textarea:focus{height:8rem;outline:3px solid color-mix(in srgb,var(--navy) 18%,transparent);border-color:var(--navy)}
 @media (min-width:760px){.own-d .df{grid-template-columns:1fr 1fr}}
 @media (min-width:1000px) and (min-height:560px){
   .own-d{grid-template-columns:auto 1fr;align-items:center;padding:.55rem 1rem;gap:1rem}
@@ -347,8 +347,8 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
   <div class="card magic opt own-d" data-val="D" role="radio" aria-checked="false" tabindex="0" style="--tone:var(--navy)">
     <div class="dh"><span class="letter">D</span><h2>Kendi önerin</h2><p>Seçenekler seni karşılamıyorsa kendin yaz; beğenilen öneri esas alınır.</p><span class="pick"></span></div>
     <div class="df">
-      <label for="d-viz">Vizyon önerin<textarea id="d-viz" maxlength="400" placeholder="Vizyon önerin: SASA yapay zekayla nereye ulaşmalı?"></textarea></label>
-      <label for="d-mis">Misyon önerin<textarea id="d-mis" maxlength="400" placeholder="Misyon önerin: oraya nasıl ulaşacağız?"></textarea></label>
+      <label for="d-viz">Vizyon önerin<textarea id="d-viz" placeholder="Vizyon önerin: SASA yapay zekayla nereye ulaşmalı?"></textarea></label>
+      <label for="d-mis">Misyon önerin<textarea id="d-mis" placeholder="Misyon önerin: oraya nasıl ulaşacağız?"></textarea></label>
     </div>
   </div>
 
@@ -655,6 +655,24 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
       document.head.appendChild(sc);
     });
   }
+  /* Uzun öneri: adrese sığmadığı için POST ile gönderilir, kaydı kayıt numarasıyla doğrulanır */
+  function uzunGonder(veri){
+    veri.id="O"+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,6).toUpperCase();
+    return fetch(API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(veri)}).then(function(){
+      var i=0;
+      return new Promise(function(res,rej){
+        (function dene(){
+          setTimeout(function(){
+            jsonp({islem:"oyvar",id:veri.id}).then(function(r){
+              if(r&&r.ok&&r.var)res({ok:true});
+              else if(++i<5)dene();
+              else rej(new Error("dogrulanamadi"));
+            },function(){if(++i<5)dene();else rej(new Error("ag"));});
+          },i?1500:500);
+        })();
+      });
+    });
+  }
   function apiFlow(){
     var ad=document.getElementById("ad"),cihaz="";
     try{cihaz=localStorage.getItem("sasa-yz-cihaz")||"";if(!cihaz){cihaz="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem("sasa-yz-cihaz",cihaz);}
@@ -669,7 +687,9 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
       if(isim.length<3){say("Önce adınızı ve soyadınızı yazın.");ad.focus();return;}
       busy=true;send.disabled=true;say("Gönderiliyor…");
       var pl=payload(),key=curKey();
-      jsonp({islem:"oy",secim:state,ad:isim,cihaz:cihaz,vizyon:pl.vizyon,misyon:pl.misyon}).then(function(r){
+      var veri={islem:"oy",secim:state,ad:isim,cihaz:cihaz,vizyon:pl.vizyon,misyon:pl.misyon};
+      var kisa=encodeURIComponent(pl.vizyon+pl.misyon+isim).length<1200;
+      (kisa?jsonp(veri):uzunGonder(veri)).then(function(r){
         busy=false;
         if(r&&r.ok){sent=key;try{localStorage.setItem("sasa-yz-ad",isim);localStorage.setItem("sasa-yz-gonderilen-"+TUR,sent);}catch(e){}paint();}
         else{say("Oy kaydedilemedi. Yeniden deneyin.");send.disabled=false;}
