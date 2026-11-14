@@ -156,8 +156,8 @@ function fikirIdleri(sh) {
 function fikirYaz(v) {
   const id = kayitNo(v.id);
   const ad = temiz(v.ad, 80);
-  const baslik = temiz(v.baslik, 120);
-  const anlatim = temiz(v.anlatim, 1200);
+  const baslik = temiz(v.baslik, 500);
+  const anlatim = temiz(v.anlatim, OY_METIN_SINIRI);
   if (id.length < 6) return { ok: false, hata: 'kayit no gerekli' };
   if (ad.length < 3 || baslik.length < 3 || anlatim.length < 20) return { ok: false, hata: 'eksik alan' };
   const kilit = LockService.getScriptLock();
@@ -165,7 +165,7 @@ function fikirYaz(v) {
   try {
     const sh = fikirSayfasi();
     if (fikirIdleri(sh).indexOf(id) >= 0) return { ok: true, tekrar: true };   // aynı gönderim ikinci kez yazılmaz
-    sh.appendRow([new Date(), id, ad, v.dil === 'en' ? 'en' : 'tr', temiz(v.birim, 60), temiz(liste_(v.konular, 4, 120), 500),
+    sh.appendRow([new Date(), id, ad, v.dil === 'en' ? 'en' : 'tr', temiz(v.birim, 60), temiz(liste_(v.konular, 4, 500), 2000),
       baslik, anlatim, sayi(v.saat, 0, 40), sayi(v.kisi, 1, 200), sayi(v.yillik, 0, 400000),
       temiz(liste_(v.veri, 9, 60), 400), temiz(liste_(v.fayda, 6, 60), 300), sayi(v.etki, 1, 5), sayi(v.yapilabilirlik, 1, 5)]);
   } finally {

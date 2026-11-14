@@ -503,14 +503,14 @@ function renderStep(keep){
     });
     var open=S.kendiAcik||!u||!u[4].length||S.kendi.trim().length>0;
     var own=h("div",{class:"pickable topic own","aria-pressed":S.kendi.trim().length>=3?"true":"false"},[h("span",{class:"tt",text:t("own")})]);
-    if(open)own.appendChild(h("input",{type:"text",value:S.kendi,maxlength:"100",placeholder:t("ownph"),"aria-label":t("own"),oninput:function(){S.kendi=this.value;autoTitle();save();own.setAttribute("aria-pressed",S.kendi.trim().length>=3?"true":"false");renderSide();}}));
+    if(open)own.appendChild(h("input",{type:"text",value:S.kendi,maxlength:"500",placeholder:t("ownph"),"aria-label":t("own"),oninput:function(){S.kendi=this.value;autoTitle();save();own.setAttribute("aria-pressed",S.kendi.trim().length>=3?"true":"false");renderSide();}}));
     else{own.setAttribute("role","button");own.tabIndex=0;own.style.cursor="pointer";var op=function(){S.kendiAcik=true;renderStep(true);var i=panel.querySelector(".own input");if(i)i.focus();};own.addEventListener("click",op);own.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();op();}});}
     tg.appendChild(own);box.appendChild(tg);
   }
   if(S.step===2){
     var colA=h("div",{class:"colA"}),colB=h("div",{class:"colB"});box.className+=" s3";
-    colA.appendChild(field(t("ftitle"),h("input",{type:"text",value:S.baslik,maxlength:"120",oninput:function(){S.baslik=this.value;S.baslikElle=true;save();renderSide();}})));
-    var ta=h("textarea",{maxlength:"1200",placeholder:t("fdescph"),oninput:function(){S.anlatim=this.value;save();renderSide();}});ta.value=S.anlatim;
+    colA.appendChild(field(t("ftitle"),h("input",{type:"text",value:S.baslik,maxlength:"500",oninput:function(){S.baslik=this.value;S.baslikElle=true;save();renderSide();}})));
+    var ta=h("textarea",{placeholder:t("fdescph"),oninput:function(){S.anlatim=this.value;save();renderSide();}});ta.value=S.anlatim;
     colA.appendChild(field(t("fdesc"),ta));
     var yb=h("b",{text:fmt(yil())});
     var hv=h("span",{class:"val"},[String(S.saat)," ",h("small",{text:t("hrs")})]);
