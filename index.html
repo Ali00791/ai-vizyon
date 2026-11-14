@@ -510,7 +510,8 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
 (function(){
   var NAMES={A:"A · Akıllı Entegre Polyester",B:"B · Öğrenen Fabrika",C:"C · Her Tonda Kazanç",D:"D · Kendi önerim"};
   var TONES={A:"var(--steel)",B:"var(--teal)",C:"var(--bronze)",D:"var(--navy)"};
-  var KEY="sasa-yz-oy", state=null, sent=null;
+  var TUR=(typeof window.OY_TUR==="string"&&window.OY_TUR)||"1";
+  var KEY="sasa-yz-oy-"+TUR, state=null, sent=null;
   var dViz=document.getElementById("d-viz"),dMis=document.getElementById("d-mis");
   try{var s=localStorage.getItem(KEY);if(s&&NAMES[s])state=s;dViz.value=localStorage.getItem("sasa-yz-dviz")||"";dMis.value=localStorage.getItem("sasa-yz-dmis")||"";}catch(e){}
   function dText(){return {vizyon:dViz.value.trim(),misyon:dMis.value.trim()};}
@@ -657,7 +658,7 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
   function apiFlow(){
     var ad=document.getElementById("ad"),cihaz="";
     try{cihaz=localStorage.getItem("sasa-yz-cihaz")||"";if(!cihaz){cihaz="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem("sasa-yz-cihaz",cihaz);}
-        ad.value=localStorage.getItem("sasa-yz-ad")||"";var g=localStorage.getItem("sasa-yz-gonderilen");if(g&&NAMES[g.charAt(0)])sent=g;}catch(e){}
+        ad.value=localStorage.getItem("sasa-yz-ad")||"";var g=localStorage.getItem("sasa-yz-gonderilen-"+TUR);if(g&&NAMES[g.charAt(0)])sent=g;}catch(e){}
     if(!cihaz)cihaz="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
     ad.hidden=false;mode="ready";paint();
     var busy=false;
@@ -670,7 +671,7 @@ h2{font-size:1.4rem;font-weight:800;line-height:1.15}
       var pl=payload(),key=curKey();
       jsonp({islem:"oy",secim:state,ad:isim,cihaz:cihaz,vizyon:pl.vizyon,misyon:pl.misyon}).then(function(r){
         busy=false;
-        if(r&&r.ok){sent=key;try{localStorage.setItem("sasa-yz-ad",isim);localStorage.setItem("sasa-yz-gonderilen",sent);}catch(e){}paint();}
+        if(r&&r.ok){sent=key;try{localStorage.setItem("sasa-yz-ad",isim);localStorage.setItem("sasa-yz-gonderilen-"+TUR,sent);}catch(e){}paint();}
         else{say("Oy kaydedilemedi. Yeniden deneyin.");send.disabled=false;}
       },function(){busy=false;say("Bağlantı kurulamadı. İnternetinizi kontrol edip yeniden deneyin.");send.disabled=false;});
     });
