@@ -33,7 +33,9 @@ function sayfa() {
   let sh = ss.getSheetByName(SAYFA);
   if (!sh) {
     sh = ss.insertSheet(SAYFA);
-    sh.appendRow(['Zaman', 'Ad Soyad', 'Seçim', 'Cihaz']);
+    sh.appendRow(['Zaman', 'Ad Soyad', 'Seçim', 'Cihaz', 'Vizyon Önerisi', 'Misyon Önerisi']);
+  } else if (sh.getLastColumn() < 6) {
+    sh.getRange(1, 5, 1, 2).setValues([['Vizyon Önerisi', 'Misyon Önerisi']]);
   }
   return sh;
 }
@@ -47,14 +49,17 @@ function temiz(metin, uzunluk) {
 
 function oyYaz(p) {
   const secim = String(p.secim || '');
-  if (['A', 'B', 'C'].indexOf(secim) < 0) return { ok: false, hata: 'gecersiz secim' };
+  if (['A', 'B', 'C', 'D'].indexOf(secim) < 0) return { ok: false, hata: 'gecersiz secim' };
   const ad = temiz(p.ad, 80);
   if (ad.length < 3) return { ok: false, hata: 'ad gerekli' };
+  const vizyon = secim === 'D' ? temiz(p.vizyon, 400) : '';
+  const misyon = secim === 'D' ? temiz(p.misyon, 400) : '';
+  if (secim === 'D' && vizyon.length < 10 && misyon.length < 10) return { ok: false, hata: 'oneri gerekli' };
   const cihaz = String(p.cihaz || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
   const kilit = LockService.getScriptLock();
   kilit.waitLock(10000);
   try {
-    sayfa().appendRow([new Date(), ad, secim, cihaz]);
+    sayfa().appendRow([new Date(), ad, secim, cihaz, vizyon, misyon]);
   } finally {
     kilit.releaseLock();
   }
@@ -72,7 +77,9 @@ function liste(p) {
         zaman: (r[0] instanceof Date) ? r[0].toISOString() : String(r[0]),
         ad: String(r[1]),
         secim: String(r[2]),
-        cihaz: String(r[3])
+        cihaz: String(r[3]),
+        vizyon: String(r[4] || ''),
+        misyon: String(r[5] || '')
       };
     })
   };

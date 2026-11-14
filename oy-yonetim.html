@@ -46,6 +46,13 @@ table{border-collapse:collapse;width:100%;font-size:.95rem}
 th,td{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap}
 th{font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
 td.s{font-family:var(--display);font-weight:800;color:var(--navy)}
+.oneriler{display:grid;gap:.7rem}
+.on{border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:.7rem;padding:.7rem .9rem;display:grid;gap:.35rem;background:#fff}
+.on .k{display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap;font-size:.86rem;color:var(--muted)}
+.on .k b{color:var(--ink);font-family:var(--display);font-size:.98rem}
+.on dl{display:grid;grid-template-columns:auto 1fr;gap:.25rem .8rem}
+.on dt{font-size:.74rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:.15rem}
+.on dd{white-space:pre-wrap;overflow-wrap:anywhere}
 td.z{color:var(--muted);font-variant-numeric:tabular-nums}
 .bos{color:var(--muted)}
 @media (max-width:600px){.t{grid-template-columns:2.1rem 1fr auto}.t strong{grid-column:2}.tw{grid-column:1/-1;grid-row:2}}
@@ -75,6 +82,11 @@ td.z{color:var(--muted);font-variant-numeric:tabular-nums}
       <div class="tally" id="tally"></div>
     </section>
     <section class="card">
+      <h2>Kendi vizyon ve misyon önerileri · kişi başına son gönderim</h2>
+      <div class="oneriler" id="oneriler"></div>
+      <p class="bos" id="bos3">Henüz kendi önerisini yazan yok.</p>
+    </section>
+    <section class="card">
       <h2>Geçerli oylar · kişi başına son gönderim</h2>
       <div class="tablo"><table><thead><tr><th>Ad Soyad</th><th>Seçim</th><th>Zaman</th></tr></thead><tbody id="gecerli"></tbody></table></div>
       <p class="bos" id="bos1">Henüz oy yok.</p>
@@ -90,8 +102,8 @@ td.z{color:var(--muted);font-variant-numeric:tabular-nums}
 <script src="ayar.js"></script>
 <script>
 (function(){
-  var NAMES={A:"Akıllı Entegre Polyester",B:"Öğrenen Fabrika",C:"Her Tonda Kazanç"};
-  var TONES={A:"var(--steel)",B:"var(--teal)",C:"var(--bronze)"};
+  var NAMES={A:"Akıllı Entegre Polyester",B:"Öğrenen Fabrika",C:"Her Tonda Kazanç",D:"Kendi önerisi"};
+  var TONES={A:"var(--steel)",B:"var(--teal)",C:"var(--bronze)",D:"var(--navy)"};
   var API=(typeof window.OY_API==="string"&&/^https:\/\//.test(window.OY_API))?window.OY_API:"";
   var durum=document.getElementById("durum"),sifre=document.getElementById("sifre"),icerik=document.getElementById("icerik"),yenile=document.getElementById("yenile");
   var anahtar="",zamanlayici=null,rows={};
@@ -123,11 +135,11 @@ td.z{color:var(--muted);font-variant-numeric:tabular-nums}
   function hucre(tr,metin,cls){var td=document.createElement("td");td.textContent=metin;if(cls)td.className=cls;tr.appendChild(td);}
 
   function ciz(oylar){
-    var temiz=oylar.filter(function(o){return o&&NAMES[o.secim];}).map(function(o){return {zaman:String(o.zaman||""),ad:String(o.ad||""),secim:o.secim,cihaz:String(o.cihaz||"")};});
+    var temiz=oylar.filter(function(o){return o&&NAMES[o.secim];}).map(function(o){return {zaman:String(o.zaman||""),ad:String(o.ad||""),secim:o.secim,cihaz:String(o.cihaz||""),vizyon:String(o.vizyon||""),misyon:String(o.misyon||"")};});
     temiz.sort(function(a,b){return a.zaman<b.zaman?1:-1;});
     var son={},sira=[];
     temiz.forEach(function(o){var k=o.cihaz||("ad:"+o.ad.toLocaleLowerCase("tr"));if(!son[k]){son[k]=o;sira.push(o);}});
-    var say={A:0,B:0,C:0};sira.forEach(function(o){say[o.secim]++;});
+    var say={A:0,B:0,C:0,D:0};sira.forEach(function(o){say[o.secim]++;});
     var max=Math.max(1,say.A,say.B,say.C);
     Object.keys(rows).forEach(function(k){rows[k].c.textContent=say[k];rows[k].b.style.width=(say[k]/max*100)+"%";});
     document.getElementById("kisi").textContent=sira.length;
@@ -138,6 +150,15 @@ td.z{color:var(--muted);font-variant-numeric:tabular-nums}
     temiz.forEach(function(o){var tr=document.createElement("tr");hucre(tr,tarih(o.zaman),"z");hucre(tr,o.ad);hucre(tr,o.secim,"s");hucre(tr,o.cihaz.slice(-6),"z");iz.appendChild(tr);});
     document.getElementById("bos1").hidden=sira.length>0;
     document.getElementById("bos2").hidden=temiz.length>0;
+    var ob=document.getElementById("oneriler");ob.textContent="";
+    var dler=sira.filter(function(o){return o.secim==="D";});
+    dler.forEach(function(o){
+      var c=document.createElement("div");c.className="on";
+      var k=document.createElement("div");k.className="k";var nm=document.createElement("b");nm.textContent=o.ad;var tm=document.createElement("span");tm.textContent=tarih(o.zaman);k.appendChild(nm);k.appendChild(tm);c.appendChild(k);
+      var dl=document.createElement("dl");[["Vizyon",o.vizyon],["Misyon",o.misyon]].forEach(function(r){var dt=document.createElement("dt");dt.textContent=r[0];var dd=document.createElement("dd");dd.textContent=r[1]||"—";dl.appendChild(dt);dl.appendChild(dd);});
+      c.appendChild(dl);ob.appendChild(c);
+    });
+    document.getElementById("bos3").hidden=dler.length>0;
   }
 
   function cek(sessiz){
