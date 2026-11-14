@@ -31,9 +31,11 @@ window.OY_API = "https://script.google.com/macros/s/..../exec";
 ### 3) Yayın (GitHub Pages)
 Depo ayarlarından Pages'i `main` dalı için açın.
 
-- Sunum ve oy: `https://<kullanıcı>.github.io/<depo>/`
-- Fikir portalı: `https://<kullanıcı>.github.io/<depo>/fikir.html`
-- Yönetim (tek giriş, iki sekme): `.../yonetim.html`
+- Sunum ve oy: `https://vizyon.ustamai.com/`
+- Fikir portalı: `https://vizyon.ustamai.com/fikir`
+- Yönetim (tek giriş, iki sekme): `https://vizyon.ustamai.com/yonetim`
+
+Alan adı `CNAME` dosyasında; Cloudflare'de `vizyon` CNAME kaydı `ali00791.github.io` adresine, proxy kapalı (DNS only).
 
 ## Nasıl çalışır
 - **Oylama:** kişi seçeneği seçer, adını yazar, gönderir. Her gönderim yeni satırdır; aynı telefondan gelen yeni oy sayımda öncekinin yerine geçer, eskisi izde kalır.
